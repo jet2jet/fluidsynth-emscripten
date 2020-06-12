@@ -180,8 +180,10 @@ unset ( FLUID_LIBS CACHE )
 # Options for the GNU C compiler only
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID STREQUAL "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
   if ( NOT APPLE AND NOT OS2 )
-    set ( CMAKE_EXE_LINKER_FLAGS
-          "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
+    if ( NOT EMSCRIPTEN_SUPPORT )
+      set ( CMAKE_EXE_LINKER_FLAGS
+            "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
+    endif ( NOT EMSCRIPTEN_SUPPORT }
     set ( CMAKE_SHARED_LINKER_FLAGS
           "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined" )
   endif ( NOT APPLE AND NOT OS2 )
