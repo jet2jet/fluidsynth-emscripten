@@ -34,6 +34,9 @@ endif()
 
 project ( FluidSynth C CXX )
 list( APPEND CMAKE_MODULE_PATH ${FluidSynth_SOURCE_DIR}/cmake_admin )
+if ( CMAKE_SYSTEM_NAME MATCHES "Emscripten" )
+    list (APPEND CMAKE_MODULE_PATH "${EMSCRIPTEN_ROOT_PATH}/cmake/Modules" )
+endif ( CMAKE_SYSTEM_NAME MATCHES "Emscripten" )
 
 # FluidSynth package name
 set ( PACKAGE "fluidsynth" )
@@ -115,6 +118,15 @@ if ( CMAKE_SYSTEM MATCHES "OS2" )
     set ( enable-ipv6 off )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
+unset ( EMSCRIPTEN_SUPPORT CACHE )
+if ( CMAKE_SYSTEM_NAME MATCHES "Emscripten" )
+    option ( enable-separate-wasm "generate separate .wasm file" off )
+    set ( EMSCRIPTEN_SUPPORT on )
+    set ( enable-network off )
+    set ( enable-readline off )
+    set ( enable-threads off )
+endif ( CMAKE_SYSTEM_NAME MATCHES "Emscripten" )
+
 # the default C standard to use for all targets
 set(CMAKE_C_STANDARD 90)
 
@@ -192,8 +204,10 @@ unset ( ENABLE_UBSAN CACHE )
 
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
   if ( NOT APPLE AND NOT OS2 AND NOT EMSCRIPTEN )
-    set ( CMAKE_EXE_LINKER_FLAGS
-          "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
+    if ( NOT EMSCRIPTEN_SUPPORT )
+      set ( CMAKE_EXE_LINKER_FLAGS
+            "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
+    endif ( NOT EMSCRIPTEN_SUPPORT )
     set ( CMAKE_SHARED_LINKER_FLAGS
           "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined" )
   endif ( NOT APPLE AND NOT OS2 AND NOT EMSCRIPTEN )
@@ -208,7 +222,11 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
   set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wno-unused-parameter" )
 
   # prepend to build type specific flags, to allow users to override
-  set ( CMAKE_C_FLAGS_DEBUG "-g ${CMAKE_C_FLAGS_DEBUG}" )
+  if ( EMSCRIPTEN_SUPPORT )
+    set ( CMAKE_C_FLAGS_DEBUG "-g4 ${CMAKE_C_FLAGS_DEBUG}" )
+  else ( EMSCRIPTEN_SUPPORT )
+    set ( CMAKE_C_FLAGS_DEBUG "-g ${CMAKE_C_FLAGS_DEBUG}" )
+  endif ( EMSCRIPTEN_SUPPORT )
 
   if ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
     # icc needs the restrict flag to recognize C99 restrict pointers
@@ -475,6 +493,9 @@ if ( ASTYLE )
     )
 endif(ASTYLE)
 
+include ( PkgConfigHelpers ) # has unset_pkg_config()
+
+if(NOT EMSCRIPTEN_SUPPORT)
 find_package ( PkgConfig REQUIRED )
 
 # Mandatory libraries: glib and gthread
@@ -484,8 +505,6 @@ list( APPEND PC_REQUIRES_PRIV "glib-2.0" "gthread-2.0")
 if ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
     message ( WARNING "Your version of glib is very old. This may cause problems with fluidsynth's sample cache on Windows. Consider updating to glib 2.26 or newer!" )
 endif ( GLIB_glib-2.0_VERSION AND GLIB_glib-2.0_VERSION VERSION_LESS "2.26.0" )
-
-include ( PkgConfigHelpers ) # has unset_pkg_config()
 
 # Optional features
 unset ( LIBSNDFILE_SUPPORT CACHE )
@@ -676,6 +695,67 @@ if ( READLINE_FOUND )
     set ( READLINE_LIBS ${READLINE_LIBRARIES} )
 endif ( READLINE_FOUND )
 endif ( enable-readline )
+
+else (NOT EMSCRIPTEN_SUPPORT)
+    FILE( STRINGS "emscripten/exports.txt" EMSCRIPTEN_EXPORTS_OPTIONS NEWLINE_CONSUME )
+    STRING ( REPLACE "\n" "" EMSCRIPTEN_EXPORTS_OPTIONS "${EMSCRIPTEN_EXPORTS_OPTIONS}" )
+    if ( NOT BUILD_SHARED_LIBS )
+      SET( EMSCRIPTEN_EXPORTS_OPTIONS "${EMSCRIPTEN_EXPORTS_OPTIONS}\"_main\"," )
+    endif ( NOT BUILD_SHARED_LIBS )
+    STRING ( REGEX REPLACE ",$" "" EMSCRIPTEN_EXPORTS_OPTIONS "${EMSCRIPTEN_EXPORTS_OPTIONS}" )
+    SET( NO_GLIB 1 )
+    SET( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNO_GLIB -DFLUIDSYNTH_DLL_EXPORTS" )
+    if ( NOT enable-separate-wasm )
+        SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s SINGLE_FILE=1" )
+    endif ( NOT enable-separate-wasm )
+    SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --pre-js ${CMAKE_SOURCE_DIR}/emscripten/src/pre.js -s ENVIRONMENT=web -s INITIAL_MEMORY=67108864 -s ALLOW_MEMORY_GROWTH=1 -s ALLOW_TABLE_GROWTH=1 -s EXPORTED_FUNCTIONS='[${EMSCRIPTEN_EXPORTS_OPTIONS}]' -s 'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\", \"FS\"]'" )
+    SET( CMAKE_EXECUTABLE_SUFFIX ".js" )
+
+    find_package ( PkgConfig REQUIRED )
+
+    # Optional features
+    unset ( LIBSNDFILE_SUPPORT CACHE )
+    unset ( LIBSNDFILE_HASVORBIS CACHE )
+    if ( enable-libsndfile )
+        pkg_check_modules ( LIBSNDFILE sndfile>=1.0.0 IMPORTED_TARGET )
+        set ( LIBSNDFILE_SUPPORT ${LIBSNDFILE_FOUND} )
+        if ( LIBSNDFILE_SUPPORT )
+            # Patch to use 'opus'
+            if ( NOT LIBSNDFILE_STATIC_LIBRARIES MATCHES "opus" )
+                list ( APPEND LIBSNDFILE_STATIC_LIBRARIES "opus" )
+                list ( APPEND LIBSNDFILE_STATIC_LDFLAGS "-lopus" )
+            endif ()
+            if ( NOT LIBSNDFILE_STATIC_LIBRARY_DIRS )
+                set ( LIBSNDFILE_STATIC_LIBRARY_DIRS "${CMAKE_INSTALL_PREFIX}/lib" )
+            endif ()
+            #[[ cmake_print_variables (
+            LIBSNDFILE_STATIC_LIBRARIES 
+                LIBSNDFILE_STATIC_LINK_LIBRARIES 
+                LIBSNDFILE_STATIC_LDFLAGS 
+                LIBSNDFILE_STATIC_LIBRARY_DIRS
+                LIBSNDFILE_STATIC_LDFLAGS_OTHER )  ]]
+            list( APPEND PC_REQUIRES_PRIV "sndfile")
+            if ( LIBSNDFILE_STATIC_LIBRARIES MATCHES "vorbis" OR
+                    LIBSNDFILE_STATIC_LDFLAGS MATCHES "vorbis" OR
+                    LIBSNDFILE_STATIC_LDFLAGS_OTHER MATCHES "vorbis" )
+                set ( LIBSNDFILE_HASVORBIS 1 )
+            else ()
+                message ( NOTICE "Seems like libsndfile was compiled without OGG/Vorbis support." )
+            endif ()
+            #[[ cmake_print_properties( TARGETS PkgConfig::LIBSNDFILE
+                PROPERTIES 
+                    INTERFACE_COMPILE_OPTIONS
+                    INTERFACE_INCLUDE_DIRECTORIES
+                    INTERFACE_LINK_OPTIONS
+                    INTERFACE_LINK_LIBRARIES )  ]]
+            sanitize_target_dirs(PkgConfig::LIBSNDFILE)
+        endif ( LIBSNDFILE_SUPPORT )
+    else ( enable-libsndfile )
+        unset_pkg_config ( LIBSNDFILE )
+        unset_pkg_config ( LIBSNDFILE_VORBIS )
+    endif ( enable-libsndfile )
+
+endif (NOT EMSCRIPTEN_SUPPORT)
 
 unset ( AUFILE_SUPPORT CACHE )
 if ( enable-aufile )

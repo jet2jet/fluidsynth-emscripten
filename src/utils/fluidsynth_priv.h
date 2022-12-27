@@ -31,7 +31,9 @@
 
 #include "config.h"
 
+#ifndef NO_GLIB
 #include <glib.h>
+#endif
 
 #if HAVE_STDLIB_H
 #include <stdlib.h> // malloc, free
@@ -48,9 +50,17 @@
 
 #include "fluidsynth.h"
 
+#if defined(NO_GLIB)
+#ifndef TRUE
+#define TRUE  1
+#define FALSE 0
+#endif
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
 
 /***************************************************************
  *
@@ -63,7 +73,7 @@ typedef float fluid_real_t;
 typedef double fluid_real_t;
 #endif
 
-#if defined(SUPPORTS_VLA)
+#if defined(SUPPORTS_VLA) || defined(NO_GLIB)
 #  define FLUID_DECLARE_VLA(_type, _name, _len) \
      _type _name[_len]
 #else
@@ -287,6 +297,7 @@ do { strncpy(_dst,_src,_n-1); \
 #define FLUID_LOG                    fluid_log
 #endif
 
+#ifndef NO_GLIB
 #if defined(DEBUG) && !defined(NDEBUG)
 #define FLUID_ASSERT(a) g_assert(a)
 #else
@@ -296,6 +307,19 @@ do { strncpy(_dst,_src,_n-1); \
 #define FLUID_LIKELY G_LIKELY
 #define FLUID_UNLIKELY G_UNLIKELY
 
+#else
+#define FLUID_ASSERT(a)
+
+#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 303)
+#define FLUID_LIKELY(x) __builtin_expect(!!(x), 1)
+#define FLUID_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+#define FLUID_LIKELY(x) (x)
+#define FLUID_UNLIKELY(x) (x)
+#endif
+#endif
+
+char *fluid_error(void);
 /* Misc */
 #if defined(__INTEL_COMPILER)
 #define FLUID_RESTRICT restrict

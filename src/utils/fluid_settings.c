@@ -21,7 +21,9 @@
 #include "fluid_sys.h"
 #include "fluid_hash.h"
 #include "fluid_synth.h"
+#ifndef NO_GLIB
 #include "fluid_cmd.h"
+#endif
 #include "fluid_adriver.h"
 #include "fluid_mdriver.h"
 #include "fluid_settings.h"
@@ -330,7 +332,9 @@ fluid_settings_init(fluid_settings_t *settings)
     fluid_return_if_fail(settings != NULL);
 
     fluid_synth_settings(settings);
+#ifndef NO_GLIB
     fluid_shell_settings(settings);
+#endif
     fluid_player_settings(settings);
     fluid_file_renderer_settings(settings);
     fluid_audio_driver_settings(settings);
