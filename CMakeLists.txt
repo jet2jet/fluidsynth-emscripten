@@ -40,6 +40,9 @@ endif()
 
 project ( FluidSynth C CXX )
 list( APPEND CMAKE_MODULE_PATH ${FluidSynth_SOURCE_DIR}/cmake_admin )
+if ( CMAKE_SYSTEM_NAME MATCHES "Emscripten" )
+    list (APPEND CMAKE_MODULE_PATH "${EMSCRIPTEN_ROOT_PATH}/cmake/Modules" )
+endif ( CMAKE_SYSTEM_NAME MATCHES "Emscripten" )
 
 # FluidSynth package name
 set ( PACKAGE "fluidsynth" )
@@ -122,6 +125,16 @@ if ( CMAKE_SYSTEM MATCHES "OS2" )
     set ( enable-ipv6 off )
 endif ( CMAKE_SYSTEM MATCHES "OS2" )
 
+unset ( EMSCRIPTEN_SUPPORT CACHE )
+if ( CMAKE_SYSTEM_NAME MATCHES "Emscripten" )
+    option ( enable-separate-wasm "generate separate .wasm file" off )
+    set ( EMSCRIPTEN_SUPPORT on )
+    set ( enable-network off )
+    set ( enable-readline off )
+    set ( enable-threads off )
+    set ( osal "embedded" )
+endif ( CMAKE_SYSTEM_NAME MATCHES "Emscripten" )
+
 # the default C standard to use for all targets
 set(CMAKE_C_STANDARD 90)
 
@@ -200,8 +213,10 @@ unset ( ENABLE_UBSAN CACHE )
 
 if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "Intel" )
   if ( NOT APPLE AND NOT OS2 AND NOT EMSCRIPTEN )
-    set ( CMAKE_EXE_LINKER_FLAGS
-          "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
+    if ( NOT EMSCRIPTEN_SUPPORT )
+      set ( CMAKE_EXE_LINKER_FLAGS
+            "${CMAKE_EXE_LINKER_FLAGS} -Wl,--as-needed" )
+    endif ( NOT EMSCRIPTEN_SUPPORT )
     set ( CMAKE_SHARED_LINKER_FLAGS
           "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined" )
   endif ( NOT APPLE AND NOT OS2 AND NOT EMSCRIPTEN )
@@ -216,7 +231,11 @@ if ( CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_C
   set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -W -Wpointer-arith -Wcast-qual -Wno-unused-parameter" )
 
   # prepend to build type specific flags, to allow users to override
-  set ( CMAKE_C_FLAGS_DEBUG "-g ${CMAKE_C_FLAGS_DEBUG}" )
+  if ( EMSCRIPTEN_SUPPORT )
+    set ( CMAKE_C_FLAGS_DEBUG "-g4 ${CMAKE_C_FLAGS_DEBUG}" )
+  else ( EMSCRIPTEN_SUPPORT )
+    set ( CMAKE_C_FLAGS_DEBUG "-g ${CMAKE_C_FLAGS_DEBUG}" )
+  endif ( EMSCRIPTEN_SUPPORT )
 
   if ( CMAKE_C_COMPILER_ID STREQUAL "Intel" )
     # icc needs the restrict flag to recognize C99 restrict pointers
@@ -725,6 +744,21 @@ if ( enable-readline )
     endif ()
   endif ( Readline_FOUND )
 endif ( enable-readline )
+
+if (EMSCRIPTEN_SUPPORT)
+    FILE( STRINGS "emscripten/exports.txt" EMSCRIPTEN_EXPORTS_OPTIONS NEWLINE_CONSUME )
+    STRING ( REPLACE "\n" "" EMSCRIPTEN_EXPORTS_OPTIONS "${EMSCRIPTEN_EXPORTS_OPTIONS}" )
+    if ( NOT BUILD_SHARED_LIBS )
+      SET( EMSCRIPTEN_EXPORTS_OPTIONS "${EMSCRIPTEN_EXPORTS_OPTIONS}\"_main\"," )
+    endif ( NOT BUILD_SHARED_LIBS )
+    STRING ( REGEX REPLACE ",$" "" EMSCRIPTEN_EXPORTS_OPTIONS "${EMSCRIPTEN_EXPORTS_OPTIONS}" )
+    SET( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DFLUIDSYNTH_DLL_EXPORTS" )
+    if ( NOT enable-separate-wasm )
+        SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -s SINGLE_FILE=1" )
+    endif ( NOT enable-separate-wasm )
+    SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --pre-js ${CMAKE_SOURCE_DIR}/emscripten/src/pre.js -s ENVIRONMENT=web -s INITIAL_MEMORY=67108864 -s ALLOW_MEMORY_GROWTH=1 -s ALLOW_TABLE_GROWTH=1 -s EXPORTED_FUNCTIONS='[${EMSCRIPTEN_EXPORTS_OPTIONS}]' -s 'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\", \"FS\",\"addFunction\",\"removeFunction\",\"MEMFS\",\"lengthBytesUTF8\",\"UTF8ArrayToString\",\"UTF8ToString\",\"stringToUTF8Array\",\"stringToUTF8\"]'" )
+    SET( CMAKE_EXECUTABLE_SUFFIX ".js" )
+endif (EMSCRIPTEN_SUPPORT)
 
 unset ( AUFILE_SUPPORT CACHE )
 if ( enable-aufile )
