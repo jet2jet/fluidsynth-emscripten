@@ -682,6 +682,26 @@ else (NOT EMSCRIPTEN_SUPPORT)
     endif ( NOT enable-separate-wasm )
     SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --pre-js ${CMAKE_SOURCE_DIR}/emscripten/src/pre.js -s ENVIRONMENT=web -s INITIAL_MEMORY=67108864 -s ALLOW_MEMORY_GROWTH=1 -s ALLOW_TABLE_GROWTH=1 -s EXPORTED_FUNCTIONS='[${EMSCRIPTEN_EXPORTS_OPTIONS}]' -s 'EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\", \"FS\"]'" )
     SET( CMAKE_EXECUTABLE_SUFFIX ".js" )
+
+    find_package ( PkgConfig REQUIRED )
+
+    include ( UnsetPkgConfig )
+
+    # Optional features
+    unset ( LIBSNDFILE_SUPPORT CACHE )
+    unset ( LIBSNDFILE_HASVORBIS CACHE )
+    if ( enable-libsndfile )
+        pkg_check_modules ( LIBSNDFILE sndfile>=1.0.0 )
+        set ( LIBSNDFILE_SUPPORT ${LIBSNDFILE_FOUND} )
+        if ( LIBSNDFILE_SUPPORT )
+            pkg_check_modules ( LIBSNDFILE_VORBIS sndfile>=1.0.18 )
+            set ( LIBSNDFILE_HASVORBIS ${LIBSNDFILE_VORBIS_FOUND} )
+        endif ( LIBSNDFILE_SUPPORT )
+    else ( enable-libsndfile )
+        unset_pkg_config ( LIBSNDFILE )
+        unset_pkg_config ( LIBSNDFILE_VORBIS )
+    endif ( enable-libsndfile )
+
 endif (NOT EMSCRIPTEN_SUPPORT)
 
 unset ( AUFILE_SUPPORT CACHE )
