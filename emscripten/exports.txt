@@ -1,3 +1,5 @@
+"_malloc",
+"_free",
 "_fluid_voice_add_mod",
 "_fluid_voice_gen_get",
 "_fluid_voice_gen_set",
