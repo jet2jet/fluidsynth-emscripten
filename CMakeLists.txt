@@ -20,6 +20,10 @@
 # CMake based build system. Pedro Lopez-Cabanillas <plcl@users.sf.net>
 
 cmake_minimum_required ( VERSION 3.13 )
+
+# Configure where pkgconfig finds vcpkg .pc files
+set(ENV{PKG_CONFIG_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/vcpkg_installed/wasm32-emscripten/lib/pkgconfig")
+
 # 3.1 because of CMAKE_C_STANDARD
 # 3.11 because COMPATIBILITY SameMinorVersion in CMakePackageConfigHelpers
 # 3.13.5 because it is the latest supported in Windows XP
