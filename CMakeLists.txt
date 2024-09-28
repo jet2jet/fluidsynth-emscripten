@@ -827,44 +827,6 @@ set(TEST_MIDI_UTF8 "${FluidSynth_SOURCE_DIR}/test/èmpty.mid")
 # Make sure to link against libm before checking for math functions below
 set ( CMAKE_REQUIRED_LIBRARIES "${LIBFLUID_LIBS};${WINDOWS_LIBS}" )
 
-# Check for C99 float math
-
-unset ( HAVE_SINF CACHE )
-CHECK_SYMBOL_EXISTS ( sinf "math.h" HAVE_SINF )
-if ( HAVE_SINF )
-  set ( HAVE_SINF 1 )
-endif ( HAVE_SINF )
-
-unset ( HAVE_COSF CACHE )
-CHECK_SYMBOL_EXISTS ( cosf "math.h" HAVE_COSF )
-if ( HAVE_COSF )
-  set ( HAVE_COSF 1 )
-endif ( HAVE_COSF )
-
-unset ( HAVE_FABSF CACHE )
-CHECK_SYMBOL_EXISTS ( fabsf "math.h" HAVE_FABSF )
-if ( HAVE_FABSF )
-  set ( HAVE_FABSF 1 )
-endif ( HAVE_FABSF )
-
-unset ( HAVE_POWF CACHE )
-CHECK_SYMBOL_EXISTS ( powf "math.h" HAVE_POWF )
-if ( HAVE_POWF )
-  set ( HAVE_POWF 1 )
-endif ( HAVE_POWF )
-
-unset ( HAVE_SQRTF CACHE )
-CHECK_SYMBOL_EXISTS ( sqrtf "math.h" HAVE_SQRTF )
-if ( HAVE_SQRTF )
-  set ( HAVE_SQRTF 1 )
-endif ( HAVE_SQRTF )
-
-unset ( HAVE_LOGF CACHE )
-CHECK_SYMBOL_EXISTS ( logf "math.h" HAVE_LOGF )
-if ( HAVE_LOGF )
-  set ( HAVE_LOGF 1 )
-endif ( HAVE_LOGF )
-
 unset ( HAVE_INETNTOP CACHE )
 unset ( IPV6_SUPPORT CACHE )
 if ( WIN32 )
