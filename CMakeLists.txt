@@ -82,17 +82,6 @@ option ( enable-jack "compile JACK support (if it is available)" off )
 option ( enable-ladspa "enable LADSPA effect units" off )
 option ( enable-libinstpatch "use libinstpatch (if available) to load DLS and GIG files" off )
 option ( enable-libsndfile "compile libsndfile support (if it is available)" off )
-option ( enable-midishare "compile MidiShare support (if it is available)" off )
-option ( enable-opensles "compile OpenSLES support (if it is available)" off )
-option ( enable-oboe "compile Oboe support (requires OpenSLES and/or AAudio)" off )
-option ( enable-network "enable network support (requires BSD sockets)" off )
-option ( enable-oss "compile OSS support (if it is available)" off )
-option ( enable-dsound "compile DirectSound support (if it is available)" off )
-option ( enable-wasapi "compile Windows WASAPI support (if it is available)" off )
-option ( enable-waveout "compile Windows WaveOut support (if it is available)" off )
-option ( enable-winmidi "compile Windows MIDI support (if it is available)" off )
-option ( enable-sdl2 "compile SDL2 audio support (if it is available)" off )
-option ( enable-pulseaudio "compile PulseAudio support (if it is available)" off )
 option ( enable-pipewire "compile PipeWire support (if it is available)" off )
 option ( enable-readline "compile readline lib line editing (if it is available)" off )
 option ( enable-threads "enable multi-threading support (such as parallel voice synthesis)" off )
@@ -517,11 +506,6 @@ if ( enable-libsndfile )
 pkg_check_modules ( LIBSNDFILE REQUIRED sndfile>=1.0.0 IMPORTED_TARGET )
 set ( LIBSNDFILE_SUPPORT ${LIBSNDFILE_FOUND} )
 if ( LIBSNDFILE_SUPPORT )
-    #[[ cmake_print_variables (
-    LIBSNDFILE_STATIC_LIBRARIES 
-        LIBSNDFILE_STATIC_LINK_LIBRARIES 
-        LIBSNDFILE_STATIC_LDFLAGS 
-        LIBSNDFILE_STATIC_LDFLAGS_OTHER )  ]]
     list( APPEND PC_REQUIRES_PRIV "sndfile")
     if ( LIBSNDFILE_STATIC_LIBRARIES MATCHES "vorbis" OR
             LIBSNDFILE_STATIC_LDFLAGS MATCHES "vorbis" OR
@@ -530,74 +514,12 @@ if ( LIBSNDFILE_SUPPORT )
     else ()
         message ( NOTICE "Seems like libsndfile was compiled without OGG/Vorbis support." )
     endif ()
-    #[[ cmake_print_properties( TARGETS PkgConfig::LIBSNDFILE
-        PROPERTIES 
-            INTERFACE_COMPILE_OPTIONS
-            INTERFACE_INCLUDE_DIRECTORIES
-            INTERFACE_LINK_OPTIONS
-            INTERFACE_LINK_LIBRARIES )  ]]
     sanitize_target_dirs(PkgConfig::LIBSNDFILE)
 endif ( LIBSNDFILE_SUPPORT )
 else ( enable-libsndfile )
     unset_pkg_config ( LIBSNDFILE )
     unset_pkg_config ( LIBSNDFILE_VORBIS )
 endif ( enable-libsndfile )
-
-unset ( PULSE_SUPPORT CACHE )
-if ( enable-pulseaudio )
-    pkg_check_modules ( PULSE REQUIRED libpulse-simple>=0.9.8 IMPORTED_TARGET )
-    set ( PULSE_SUPPORT ${PULSE_FOUND} )
-    if ( PULSE_SUPPORT )
-        list( APPEND PC_REQUIRES_PRIV "libpulse-simple")
-    endif ( PULSE_SUPPORT )
-else ( enable-pulseaudio )
-    unset_pkg_config ( PULSE )
-endif ( enable-pulseaudio )
-
-unset ( ALSA_SUPPORT CACHE )
-if ( enable-alsa )
-    pkg_check_modules ( ALSA REQUIRED alsa>=0.9.1 IMPORTED_TARGET )
-    set ( ALSA_SUPPORT ${ALSA_FOUND} )
-    if ( ALSA_SUPPORT )
-        list( APPEND PC_REQUIRES_PRIV "alsa")
-    endif ( ALSA_SUPPORT )
-else ( enable-alsa )
-    unset_pkg_config ( ALSA )
-endif ( enable-alsa )
-
-unset ( PORTAUDIO_SUPPORT CACHE )
-if ( enable-portaudio )
-    pkg_check_modules ( PORTAUDIO REQUIRED portaudio-2.0>=19 IMPORTED_TARGET )
-    set ( PORTAUDIO_SUPPORT ${PORTAUDIO_FOUND} )
-    if ( PORTAUDIO_SUPPORT )
-        list( APPEND PC_REQUIRES_PRIV "portaudio-2.0")
-    endif ()
-else ( enable-portaudio )
-    unset_pkg_config ( PORTAUDIO )
-endif ( enable-portaudio )
-
-unset ( JACK_SUPPORT CACHE )
-if ( enable-jack )
-    pkg_check_modules ( JACK REQUIRED jack IMPORTED_TARGET )
-    set ( JACK_SUPPORT ${JACK_FOUND} )
-    if (JACK_SUPPORT)
-        sanitize_target_dirs(PkgConfig::JACK)
-        list( APPEND PC_REQUIRES_PRIV "jack")
-    endif()
-else ( enable-jack )
-    unset_pkg_config ( JACK )
-endif ( enable-jack )
-
-unset ( PIPEWIRE_SUPPORT CACHE )
-if ( enable-pipewire )
-    pkg_check_modules ( PIPEWIRE REQUIRED libpipewire-0.3 IMPORTED_TARGET )
-    set ( PIPEWIRE_SUPPORT ${PIPEWIRE_FOUND} )
-    if ( PIPEWIRE_SUPPORT )
-        list( APPEND PC_REQUIRES_PRIV "libpipewire-0.3")
-    endif()
-else ( enable-pipewire )
-    unset_pkg_config ( PIPEWIRE )
-endif ( enable-pipewire )
 
 unset ( LASH_SUPPORT CACHE )
 if ( enable-lash )
@@ -623,66 +545,6 @@ if ( enable-systemd )
 else ( enable-systemd )
     unset_pkg_config ( SYSTEMD )
 endif ( enable-systemd )
-
-unset ( DBUS_SUPPORT CACHE )
-if ( enable-dbus )
-pkg_check_modules ( DBUS REQUIRED dbus-1>=1.0.0 IMPORTED_TARGET )
-set ( DBUS_SUPPORT ${DBUS_FOUND} )
-if ( DBUS_SUPPORT )
-    list( APPEND PC_REQUIRES_PRIV "dbus-1")
-endif ()
-else ( enable-dbus )
-    unset_pkg_config ( DBUS )
-endif ( enable-dbus )
-
-unset ( LADSPA_SUPPORT CACHE )
-if ( enable-ladspa )
-check_include_file ( ladspa.h LADSPA_SUPPORT )
-if ( LADSPA_SUPPORT )
-    pkg_check_modules ( GMODULE REQUIRED gmodule-2.0>=2.6.5 IMPORTED_TARGET )
-    set ( LADSPA 1 )
-    list( APPEND PC_REQUIRES_PRIV "gmodule-2.0")
-endif ( LADSPA_SUPPORT )
-endif ( enable-ladspa )
-
-unset ( LIBINSTPATCH_SUPPORT CACHE )
-if ( enable-libinstpatch )
-    pkg_check_modules ( LIBINSTPATCH REQUIRED libinstpatch-1.0>=1.1.0 IMPORTED_TARGET )
-    set ( LIBINSTPATCH_SUPPORT ${LIBINSTPATCH_FOUND} )
-    if ( LIBINSTPATCH_SUPPORT )
-        list( APPEND PC_REQUIRES_PRIV "libinstpatch-1.0")
-        #[[ cmake_print_properties( TARGETS PkgConfig::LIBINSTPATCH
-            PROPERTIES
-                INTERFACE_COMPILE_OPTIONS
-                INTERFACE_INCLUDE_DIRECTORIES
-                INTERFACE_LINK_DIRECTORIES
-                INTERFACE_LINK_OPTIONS
-                INTERFACE_LINK_LIBRARIES ) ]]
-        sanitize_target_dirs(PkgConfig::LIBINSTPATCH)
-    endif (LIBINSTPATCH_SUPPORT )
-endif ( enable-libinstpatch )
-
-unset ( SDL2_SUPPORT CACHE )
-if ( enable-sdl2 )
-    pkg_check_modules ( SDL2 REQUIRED sdl2>=2.0.4 IMPORTED_TARGET )
-    set ( SDL2_SUPPORT ${SDL2_FOUND} )
-    if ( SDL2_SUPPORT )
-        list( APPEND PC_REQUIRES_PRIV "sdl2")
-    endif ( SDL2_SUPPORT )
-else ( enable-sdl2 )
-    unset_pkg_config ( SDL2 )
-endif ( enable-sdl2 )
-
-unset ( OBOE_SUPPORT CACHE )
-if ( enable-oboe )
-    pkg_check_modules ( OBOE REQUIRED oboe-1.0 IMPORTED_TARGET )
-    if ( OBOE_FOUND )
-    set(CMAKE_CXX_STANDARD 14)
-    set(CMAKE_CXX_STANDARD_REQUIRED ON)
-    set ( OBOE_SUPPORT 1 )
-    list( APPEND PC_REQUIRES_PRIV "oboe-1.0")
-    endif ( OBOE_FOUND )
-endif ( enable-oboe )
 
 unset ( WITH_READLINE CACHE )
 unset ( READLINE_LIBS CACHE )
@@ -724,20 +586,6 @@ else (NOT EMSCRIPTEN_SUPPORT)
         pkg_check_modules ( LIBSNDFILE REQUIRED sndfile>=1.0.0 IMPORTED_TARGET )
         set ( LIBSNDFILE_SUPPORT ${LIBSNDFILE_FOUND} )
         if ( LIBSNDFILE_SUPPORT )
-            # Patch to use 'opus'
-            if ( NOT LIBSNDFILE_STATIC_LIBRARIES MATCHES "opus" )
-                list ( APPEND LIBSNDFILE_STATIC_LIBRARIES "opus" )
-                list ( APPEND LIBSNDFILE_STATIC_LDFLAGS "-lopus" )
-            endif ()
-            if ( NOT LIBSNDFILE_STATIC_LIBRARY_DIRS )
-                set ( LIBSNDFILE_STATIC_LIBRARY_DIRS "${CMAKE_INSTALL_PREFIX}/lib" )
-            endif ()
-            #[[ cmake_print_variables (
-            LIBSNDFILE_STATIC_LIBRARIES 
-                LIBSNDFILE_STATIC_LINK_LIBRARIES 
-                LIBSNDFILE_STATIC_LDFLAGS 
-                LIBSNDFILE_STATIC_LIBRARY_DIRS
-                LIBSNDFILE_STATIC_LDFLAGS_OTHER )  ]]
             list( APPEND PC_REQUIRES_PRIV "sndfile")
             if ( LIBSNDFILE_STATIC_LIBRARIES MATCHES "vorbis" OR
                     LIBSNDFILE_STATIC_LDFLAGS MATCHES "vorbis" OR
@@ -746,12 +594,6 @@ else (NOT EMSCRIPTEN_SUPPORT)
             else ()
                 message ( NOTICE "Seems like libsndfile was compiled without OGG/Vorbis support." )
             endif ()
-            #[[ cmake_print_properties( TARGETS PkgConfig::LIBSNDFILE
-                PROPERTIES 
-                    INTERFACE_COMPILE_OPTIONS
-                    INTERFACE_INCLUDE_DIRECTORIES
-                    INTERFACE_LINK_OPTIONS
-                    INTERFACE_LINK_LIBRARIES )  ]]
             sanitize_target_dirs(PkgConfig::LIBSNDFILE)
         endif ( LIBSNDFILE_SUPPORT )
     else ( enable-libsndfile )
@@ -760,42 +602,6 @@ else (NOT EMSCRIPTEN_SUPPORT)
     endif ( enable-libsndfile )
 
 endif (NOT EMSCRIPTEN_SUPPORT)
-
-unset ( AUFILE_SUPPORT CACHE )
-if ( enable-aufile )
-  set ( AUFILE_SUPPORT 1 )
-endif ( enable-aufile )
-
-unset ( OSS_SUPPORT CACHE )
-if ( enable-oss )
-  find_package ( OSS QUIET )
-  set ( OSS_SUPPORT ${OSS_FOUND} )
-endif ( enable-oss )
-
-unset ( MIDISHARE_SUPPORT CACHE )
-if ( enable-midishare )
-  find_package ( MidiShare QUIET )
-  set ( MIDISHARE_SUPPORT ${MidiShare_FOUND} )
-  if ( MidiShare_FOUND )
-    set ( MidiShare_LIBS ${MidiShare_LIBRARIES} )
-  else ( MidiShare_FOUND )
-    unset ( MidiShare_LIBS CACHE )
-  endif ( MidiShare_FOUND )
-else ( enable-midishare )
-  unset ( MidiShare_LIBS CACHE )
-endif ( enable-midishare )
-
-unset ( OPENSLES_SUPPORT CACHE )
-unset ( OpenSLES_LIBS CACHE )
-if ( enable-opensles )
-  check_include_file ( SLES/OpenSLES.h OPENSLES_SUPPORT )
-  if ( OPENSLES_SUPPORT )
-    find_library ( OpenSLES_LIBS OpenSLES )
-    if ( NOT OpenSLES_LIBS )
-      unset ( OPENSLES_SUPPORT )
-    endif ( NOT OpenSLES_LIBS )
-  endif ( OPENSLES_SUPPORT )
-endif ( enable-opensles )
 
 unset ( ENABLE_MIXER_THREADS CACHE )
 if ( enable-threads )
@@ -809,12 +615,6 @@ if (enable-openmp AND ENABLE_UBSAN)
 elseif (enable-openmp AND ( OpenMP_FOUND OR OpenMP_C_FOUND ) )
     message(STATUS "Found OpenMP version: ${OpenMP_C_VERSION} date: ${OpenMP_C_SPEC_DATE}")
     if ( TARGET OpenMP::OpenMP_C AND (( NOT OpenMP_C_SPEC_DATE LESS "201307" ) OR NOT ( OpenMP_C_VERSION VERSION_LESS "4.0" )) )
-        #[[ cmake_print_properties( TARGETS OpenMP::OpenMP_C
-            PROPERTIES 
-               INTERFACE_COMPILE_OPTIONS
-               INTERFACE_INCLUDE_DIRECTORIES
-               INTERFACE_LINK_OPTIONS
-               INTERFACE_LINK_LIBRARIES ) ]]
         set ( HAVE_OPENMP 1 )
     else()
         message(STATUS "  OpenMP version is not supported. Feature disabled.")

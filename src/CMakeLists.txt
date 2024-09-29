@@ -21,91 +21,6 @@
 
 # ************ library ************
 
-if ( PULSE_SUPPORT )
-  set ( fluid_pulse_SOURCES drivers/fluid_pulse.c )
-endif ( PULSE_SUPPORT )
-
-if ( ALSA_SUPPORT )
-  set ( fluid_alsa_SOURCES drivers/fluid_alsa.c )
-endif ( ALSA_SUPPORT )
-
-if ( COREAUDIO_SUPPORT )
-  set ( fluid_coreaudio_SOURCES drivers/fluid_coreaudio.c )
-endif ( COREAUDIO_SUPPORT )
-
-if ( COREMIDI_SUPPORT )
-  set ( fluid_coremidi_SOURCES drivers/fluid_coremidi.c )
-endif ( COREMIDI_SUPPORT )
-
-if ( DBUS_SUPPORT )
-  set ( fluid_dbus_SOURCES bindings/fluid_rtkit.c bindings/fluid_rtkit.h )
-endif ( DBUS_SUPPORT )
-
-if ( JACK_SUPPORT )
-  set ( fluid_jack_SOURCES drivers/fluid_jack.c )
-endif ( JACK_SUPPORT )
-
-if ( PIPEWIRE_SUPPORT )
-  set ( fluid_pipewire_SOURCES drivers/fluid_pipewire.c )
-  include_directories ( SYSTEM ${PIPEWIRE_INCLUDE_DIRS} )
-endif ( PIPEWIRE_SUPPORT )
-
-if ( PORTAUDIO_SUPPORT )
-  set ( fluid_portaudio_SOURCES drivers/fluid_portaudio.c )
-endif ( PORTAUDIO_SUPPORT )
-
-if ( DSOUND_SUPPORT )
-  set ( fluid_dsound_SOURCES drivers/fluid_dsound.c )
-endif ( DSOUND_SUPPORT )
-
-if ( WASAPI_SUPPORT )
-  set ( fluid_wasapi_SOURCES drivers/fluid_wasapi.c )
-endif ( WASAPI_SUPPORT )
-
-if ( WAVEOUT_SUPPORT )
-  set ( fluid_waveout_SOURCES drivers/fluid_waveout.c )
-endif ( WAVEOUT_SUPPORT )
-
-if ( WINMIDI_SUPPORT )
-  set ( fluid_winmidi_SOURCES drivers/fluid_winmidi.c )
-endif ( WINMIDI_SUPPORT )
-
-if ( SDL2_SUPPORT )
-  set ( fluid_sdl2_SOURCES drivers/fluid_sdl2.c )
-endif ( SDL2_SUPPORT )
-
-if ( OSS_SUPPORT )
-  set ( fluid_oss_SOURCES drivers/fluid_oss.c )
-endif ( OSS_SUPPORT )
-
-if ( LASH_SUPPORT )
-  set ( fluid_lash_SOURCES bindings/fluid_lash.c bindings/fluid_lash.h )
-endif ( LASH_SUPPORT )
-
-if ( DART_SUPPORT )
-  set ( fluid_dart_SOURCES drivers/fluid_dart.c )
-endif ( DART_SUPPORT )
-
-if ( MIDISHARE_SUPPORT )
-  set ( fluid_midishare_SOURCES drivers/fluid_midishare.c )
-endif ( MIDISHARE_SUPPORT )
-
-if ( AUFILE_SUPPORT )
-  set ( fluid_aufile_SOURCES drivers/fluid_aufile.c )
-endif ( AUFILE_SUPPORT )
-
-if ( LIBINSTPATCH_SUPPORT )
-  set ( fluid_libinstpatch_SOURCES sfloader/fluid_instpatch.c sfloader/fluid_instpatch.h )
-endif ( LIBINSTPATCH_SUPPORT )
-
-if ( OPENSLES_SUPPORT )
-  set ( fluid_opensles_SOURCES drivers/fluid_opensles.c )
-endif ( OPENSLES_SUPPORT )
-
-if ( OBOE_SUPPORT )
-  set ( fluid_oboe_SOURCES drivers/fluid_oboe.cpp )
-endif ( OBOE_SUPPORT )
-
 set ( config_SOURCES ${FluidSynth_BINARY_DIR}/config.h )
 
 if ( NOT EMSCRIPTEN_SUPPORT )
@@ -123,9 +38,9 @@ set ( libfluidsynth_SOURCES
     utils/fluid_ringbuffer.h
     utils/fluid_settings.c
     utils/fluid_settings.h
-    utils/fluidsynth_priv.h
     utils/fluid_sys.c
     utils/fluid_sys.h
+    utils/fluidsynth_priv.h
     sfloader/fluid_defsfont.c
     sfloader/fluid_defsfont.h
     sfloader/fluid_sfont.h
