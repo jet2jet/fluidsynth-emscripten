@@ -1,0 +1,7 @@
+{
+  "name": "libfluidsynth",
+  "version": "2.3.0",
+  "dependencies": [
+    "sndfile"
+  ]
+}
