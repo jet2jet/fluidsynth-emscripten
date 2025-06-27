@@ -1,9 +1,10 @@
-
 # FluidSynth with Emscripten-specific patch
 
 This repository is based on [FluidSynth](https://github.com/FluidSynth/fluidsynth) repository, and contains some changes to build with Emscripten.
 
 The original README is here: [README.original.md](./README.original.md)
+
+To use the synthesizer easily, consider using [js-synthesizer](https://github.com/jet2jet/js-synthesizer), which wraps fluidsynth-emscripten.
 
 ## Build
 
@@ -24,6 +25,8 @@ After successful build, `libfluidsynth-<version>.js` will be created at `build/s
 * If `enable-separate-wasm` specified on the `cmake` execution (e.g. `emcmake cmake -Denable-separate-wasm=on ..`), `libfluidsynth-<version>.wasm` and `libfluidsynth-<version>.wast` are also generated.
     * For AudioWorklet, you cannot use `*.wasm` file directly.
 * In Emscripten-build mode, standalone application named `fluidsynth` is not emitted.
+* By default, if `libsndfile` and its dependencies (FLAC, ogg, vorbis, vorbisenc, opus) are found, the library will be bundled and corresponding features will be enabled. `-Denable-libsndfile=off` will disable the features.
+    * `libsndfile` and the dependencies must be built with Emscripten and installed in the Emscripten sysroot (e.g. `path/to/emsdk/upstream/emscripten/cache/sysroot` ).
 
 ## Build static library for Emscripten
 
