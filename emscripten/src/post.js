@@ -1,7 +1,3 @@
-//var Module = typeof Module !== 'undefined' ? Module : {};
-// (to avoid errors occurred in emscripten's code)
-var document = typeof document !== 'undefined' ? document : {};
-var window = typeof window !== 'undefined' ? window : {};
 // expose wasm API to AudioWorklet
 if (typeof AudioWorkletGlobalScope !== 'undefined' && AudioWorkletGlobalScope) {
     AudioWorkletGlobalScope.atob = typeof atob=="function" ? atob : function (input) {
